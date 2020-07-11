@@ -69,6 +69,7 @@ userSchema.statics.findOrCreate = function findOrCreate(profile, callback) {
             userObj.token_expiry = dateObj;
             userObj.save(callback);
         } else {
+            User.updateOne({_id: profile.id}, {access_token: profile.access_token, refresh_token: profile.refresh_token}).exec();
             console.log(profile.id, "found");
             callback(err, res);
         }
@@ -90,7 +91,9 @@ user-read-currently-playing playlist-read-collaborative \
 playlist-modify-public playlist-read-private \
 playlist-modify-private"
 
-// login route
+// (Step 1)
+// User gives app permission to use Spotify
+// (login route)
 app.get("/login", (req, res) => {
     res.redirect("https://accounts.spotify.com/authorize" + 
     '?response_type=code' +
@@ -113,10 +116,11 @@ app.get("/login/callback", async (req, res) => {
         parameters.append("redirect_uri", SPOTIFY_REDIRECT_URI);
         parameters.append("code", code);
 
-        // (Step 1)
-        // User gives app permission to use Spotify
+        // (Step 2)
+        // Spotify returns us to /callback
+        // From here, now request a token if the user authoritzed
         let rawToken = await fetch("https://accounts.spotify.com/api/token", {
-            method: 'POST',
+            method: "POST",
             headers: {
                 "Authorization": authHeader,
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -124,16 +128,21 @@ app.get("/login/callback", async (req, res) => {
             body: parameters,
         }).then(response => response.json());
         
+        // (Step 3)
+        // Grab user information, such as id and profile URL
         let userData = await fetch("https://api.spotify.com/v1/me", {
-            method: 'GET',
+            method: "GET",
             headers: {
                 "Authorization": 'Bearer ' + rawToken.access_token,
             },
         }).then(response => response.json());
 
+        // (Step 4)
         // combine user data with token data
-        combinedData = Object.assign({}, userData, rawToken);
+        let combinedData = Object.assign({}, userData, rawToken);
 
+        // (Step 5)
+        // Add to database if they don't
         User.findOrCreate(combinedData, (err, result) => {
             if (!err) {
                 req.session.user = result;
@@ -146,11 +155,91 @@ app.get("/login/callback", async (req, res) => {
 })
 
 /*
+    Spotify API calls
+*/
+
+// new token? look no further
+async function requestNew(userObj) {
+    const parameters = new URLSearchParams();
+    parameters.append("grant_type", "refresh_token");
+    parameters.append("refresh_token", userObj.refresh_token);
+
+    // Grab a new access token
+    let rawToken = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+            "Authorization": authHeader,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: parameters,
+    }).then(response => response.json());
+
+
+    // Update database
+    // update tokens and token_expiry
+    
+    let dateObj = new Date();
+    dateObj.setSeconds(dateObj.getSeconds() + parseInt(rawToken.expires_in));
+
+    let toChange = {
+        access_token: rawToken.access_token,
+        refresh_token: rawToken.refresh_token,
+        token_expiry: dateObj,
+    }
+
+    User.updateOne({_id: userObj.id}, toChange, (err, dat) => {
+        if (err) {
+            console.log(err)
+        }
+    })
+
+    return Object.assign({}, userObj, toChange);
+}
+
+app.get("/api/currentSong", async (req, res) => {
+    // this would've been an implied return with (!req.session || !req.session.user)
+    // but that apparently doesn't work!
+
+    if (!req.session || !req.session.user) {
+        return res.json({response: "Not logged in!"});
+    }
+
+    // Check if token has expired
+    // If it has, replace it
+
+    if (!req.session.user.token_expiry || new Date(req.session.user.token_expiry) > new Date()) {
+        userObj = await requestNew(req.session.user).then((result) => {
+            return result;
+        });
+
+        // replace session object with our swanky new one
+        req.session.user = userObj;
+    }
+
+    let playingObj = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+        method: "GET",
+        headers: {
+            "Authorization": 'Bearer ' + req.session.user.access_token,
+        },
+    }).then(response => {
+        if (response.status == 204) {
+            return {response: "No song playing"};
+        } else {
+            return response.json();
+        }
+    });
+
+    res.send(playingObj);
+})
+
+/*
     Routes
 */
 app.get("/", async (req, res) => {
     res.end("Hi!");
-    console.log(req.session);
+    if (req.session.user) {
+        console.log(req.session.user);
+    }
 })
 
 // Is the user logged in?
