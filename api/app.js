@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 
 const fetch = require("node-fetch");
+const session = require("express-session");
 const {URLSearchParams} = require("url");
 
 /*
@@ -13,6 +14,14 @@ const config = require("dotenv").config();
 if (config.error) {
     console.log("No .env file found!")
 }
+
+/*
+    Session
+*/
+app.use(session({
+    secret: "nutella is better than peanut butter",
+    saveUninitialized: false
+}))
 
 /*
     Database setup
@@ -27,7 +36,7 @@ mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopo
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", function() {
-  console.log("Connected to database");
+    console.log("Connected to database");
 });
 
 /*
@@ -49,10 +58,9 @@ userSchema.statics.findOrCreate = function findOrCreate(profile, callback) {
 
     this.findOne({_id: profile.id}, function(err, res) {
         if (!res) {
-            console.log(profile.id, "not found")
+            console.log(profile.id, "not found");
             let dateObj = new Date();
             dateObj.setSeconds(dateObj.getSeconds() + parseInt(profile.expires_in));
-
             userObj._id = profile.id;
             userObj.displayName = (profile.display_name === undefined) ? profile.id : profile.display_name;
             userObj.url = (profile.external_urls.spotify === undefined) ? "" : profile.external_urls.spotify;
@@ -61,7 +69,7 @@ userSchema.statics.findOrCreate = function findOrCreate(profile, callback) {
             userObj.token_expiry = dateObj;
             userObj.save(callback);
         } else {
-            console.log("found")
+            console.log(profile.id, "found");
             callback(err, res);
         }
     });
@@ -105,6 +113,8 @@ app.get("/login/callback", async (req, res) => {
         parameters.append("redirect_uri", SPOTIFY_REDIRECT_URI);
         parameters.append("code", code);
 
+        // (Step 1)
+        // User gives app permission to use Spotify
         let rawToken = await fetch("https://accounts.spotify.com/api/token", {
             method: 'POST',
             headers: {
@@ -124,11 +134,13 @@ app.get("/login/callback", async (req, res) => {
         // combine user data with token data
         combinedData = Object.assign({}, userData, rawToken);
 
-        res.redirect("/")
-
         User.findOrCreate(combinedData, (err, result) => {
-            console.log("Error", err);
-            console.log("Result", result)
+            if (!err) {
+                req.session.user = result;
+                res.redirect("/")
+            } else {
+                res.send(err);
+            }
         });
     }
 })
@@ -138,6 +150,16 @@ app.get("/login/callback", async (req, res) => {
 */
 app.get("/", async (req, res) => {
     res.end("Hi!");
+    console.log(req.session);
+})
+
+// Is the user logged in?
+// Returns object {result: Boolean}
+app.get("/api/loggedIn", (req, res) => {
+    if (req.session && req.session.user) {
+        res.send({response: true});
+    }
+    res.send({response: false});
 })
 
 module.exports = app;
