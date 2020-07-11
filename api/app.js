@@ -254,8 +254,19 @@ app.post("/api/friends/add", async (req, res) => {
     }
 
     let friendId = req.body.id;
+    
+    users[req.session.user._id]["friends"].append(friendId);
+    req.session.user._id["friends"].append(friendId);
 
-    // WIP
+    let toChange = {
+        friends: users[req.session.user._id]["friends"],
+    }
+
+    User.updateOne({_id: req.session.user._id}, toChange, (err, dat) => {
+        if (err) {
+            res.send({response: "Failed to update friends!"});
+        }
+    })
 
     res.send(req.session.user.friends);
 })
@@ -282,6 +293,7 @@ app.get("/api/attempt", async (req, res) => {
 /*
     Routes
 */
+
 app.get("/", async (req, res) => {
     res.end("Hi!");
     if (req.session.user) {
@@ -297,5 +309,22 @@ app.get("/api/loggedIn", (req, res) => {
     }
     res.send({response: false});
 })
+
+app.post("/api/share", (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+
+    
+})
+
+/*
+    Main loop
+*/
+
+var requestLoop = setInterval(function(){
+    // do things
+  }, 5000);
+  
 
 module.exports = app;
