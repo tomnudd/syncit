@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 
+const bodyParser = require("body-parser");
 const fetch = require("node-fetch");
 const session = require("express-session");
 const {URLSearchParams} = require("url");
@@ -23,13 +24,16 @@ app.use(session({
     saveUninitialized: false
 }))
 
+app.use(bodyParser.json());
+
+let users = {};
+
 /*
     Database setup
 */
 
 const mongoose = require("mongoose"),
-    Schema = mongoose.Schema,
-    ObjectId = mongoose.Types.ObjectId;
+    Schema = mongoose.Schema;
 
 mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 
@@ -50,6 +54,7 @@ const userSchema = new Schema({
     refresh_token: String,
     displayName: String,
     url: String,
+    friends: [String]
 })
 
 // Hunting for user accounts!
@@ -67,6 +72,7 @@ userSchema.statics.findOrCreate = function findOrCreate(profile, callback) {
             userObj.access_token = profile.access_token;
             userObj.refresh_token = profile.refresh_token;
             userObj.token_expiry = dateObj;
+            userObj.friends = [];
             userObj.save(callback);
         } else {
             User.updateOne({_id: profile.id}, {access_token: profile.access_token, refresh_token: profile.refresh_token}).exec();
@@ -141,6 +147,10 @@ app.get("/login/callback", async (req, res) => {
         // combine user data with token data
         let combinedData = Object.assign({}, userData, rawToken);
 
+        combinedObj = Object.assign({}, combinedData);
+        delete combinedObj["_id"];
+        users[combinedData.id] = combinedObj;
+
         // (Step 5)
         // Add to database if they don't
         User.findOrCreate(combinedData, (err, result) => {
@@ -174,7 +184,6 @@ async function requestNew(userObj) {
         body: parameters,
     }).then(response => response.json());
 
-
     // Update database
     // update tokens and token_expiry
     
@@ -189,7 +198,7 @@ async function requestNew(userObj) {
 
     User.updateOne({_id: userObj.id}, toChange, (err, dat) => {
         if (err) {
-            console.log(err)
+            console.log(err);
         }
     })
 
@@ -232,6 +241,25 @@ app.get("/api/currentSong", async (req, res) => {
     res.send(playingObj);
 })
 
+app.get("/api/friends/list", async (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+    res.send(req.session.user.friends);
+})
+
+app.post("/api/friends/add", async (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+
+    let friendId = req.body.id;
+
+    // WIP
+
+    res.send(req.session.user.friends);
+})
+
 app.get("/api/attempt", async (req, res) => {
     let spot = await fetch("https://api.spotify.com/v1/me/player/play", {
         method: "PUT",
@@ -249,7 +277,7 @@ app.get("/api/attempt", async (req, res) => {
     console.log(spot);
 
     res.redirect("/");
-})//
+})
 
 /*
     Routes
