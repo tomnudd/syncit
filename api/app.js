@@ -232,6 +232,25 @@ app.get("/api/currentSong", async (req, res) => {
     res.send(playingObj);
 })
 
+app.get("/api/attempt", async (req, res) => {
+    let spot = await fetch("https://api.spotify.com/v1/me/player/play", {
+        method: "PUT",
+        headers: {
+            "Authorization": 'Bearer ' + req.session.user.access_token,
+        },
+        body: JSON.stringify({
+            uris: ["spotify:track:4cxvludVmQxryrnx1m9FqL"],
+            position_ms: 7500,
+        }),
+    }).then((response) => {
+        // error handling comes later!
+        return response;
+    })
+    console.log(spot);
+
+    res.redirect("/");
+})//
+
 /*
     Routes
 */
