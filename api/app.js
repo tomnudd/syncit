@@ -261,44 +261,6 @@ async function currentlyPlaying(user) {
     return playingObj;
 }
 
-// GET /api/friends/list
-// returns a list of friends
-app.get("/api/friends/list", async (req, res) => {
-    if (!req.session || !req.session.user) {
-        res.send({response: "Not logged in!"});
-    }
-
-    let myFriends = Object.assign({}, req.session.user.friends);
-
-    res.send(myFriends);
-})
-
-// POST /api/friends/add
-// body {id: "friendID"}
-// returns updated list of friends
-app.post("/api/friends/add", async (req, res) => {
-    if (!req.session || !req.session.user) {
-        res.send({response: "Not logged in!"});
-    }
-
-    let friendId = req.body.id;
-    
-    users[req.session.user._id]["friends"].append(friendId);
-    req.session.user.friends.append(friendId);
-
-    let toChange = {
-        friends: users[req.session.user._id]["friends"],
-    }
-
-    User.updateOne({_id: req.session.user._id}, toChange, (err, dat) => {
-        if (err) {
-            res.send({response: "Failed to update friends!"});
-        }
-    })
-
-    res.send(req.session.user.friends);
-})
-
 // GET /api/attempt
 // Syncs you up to a bit of Hamilton
 app.get("/api/attempt", async (req, res) => {
@@ -318,6 +280,32 @@ app.get("/api/attempt", async (req, res) => {
     console.log(spot);
 
     res.redirect("/");
+})
+
+// GET /api/attempt
+// Syncs you up to a bit of Hamilton
+app.post("/api/changeSong", async (req, res) => {
+    if (req.body.uri) {
+        let timestamp = (req.body.position_ms === undefined) ? 0 : req.body.position_ms;
+
+        let spot = await fetch("https://api.spotify.com/v1/me/player/play", {
+            method: "PUT",
+            headers: {
+                "Authorization": 'Bearer ' + req.session.user.access_token,
+            },
+            body: JSON.stringify({
+                uris: req.body.uri,
+                position_ms: timestamp,
+            }),
+        }).then((response) => {
+            // error handling comes later!
+            return response;
+        })
+
+        res.redirect("/");
+    } else {
+        res.send({response: "No URI provided"})
+    }
 })
 
 /*
@@ -368,6 +356,44 @@ app.get("/api/status", (req, res) => {
     }
 })
 
+// GET /api/friends/list
+// returns a list of friends
+app.get("/api/friends/list", async (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+
+    let myFriends = Object.assign({}, req.session.user.friends);
+
+    res.send(myFriends);
+})
+
+// POST /api/friends/add
+// body {id: "friendID"}
+// returns updated list of friends
+app.post("/api/friends/add", async (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+
+    let friendId = req.body.id;
+    
+    users[req.session.user._id]["friends"].append(friendId);
+    req.session.user.friends.append(friendId);
+
+    let toChange = {
+        friends: users[req.session.user._id]["friends"],
+    }
+
+    User.updateOne({_id: req.session.user._id}, toChange, (err, dat) => {
+        if (err) {
+            res.send({response: "Failed to update friends!"});
+        }
+    })
+
+    res.send(req.session.user.friends);
+})
+
 /*
     Main loop
     Every two seconds, let's check what they're listening to
@@ -385,6 +411,5 @@ var requestLoop = setInterval(async function() {
 }, 1000);
 
 requestLoop;
-  
 
 module.exports = app;
