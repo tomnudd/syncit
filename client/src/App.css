@@ -1,3 +1,51 @@
 .App {
   text-align: center;
+  color: #d6d6d6;
+  font-family: Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.heroContent {
+  background-color: #363636;
+  padding: 2px 0px 12px;
+}
+
+.fullHero {
+  background-color: #363636;
+  height: 100vh;
+  padding: 2px 0px 12px;
+  padding-top: 75px;
+}
+
+h1 {
+  font-size: 66px;
+  font-weight: bolder;
+  margin-bottom: 10px;
+}
+
+.chop {
+  margin-top: 10px;
+}
+
+h2 {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+button {
+  border-radius: 20;
+  background-color: "#1DB954";
+  color: "#363636";
+  font-weight: 600;
+  padding: "6px 20px";
+  font-size: "18px";
+  margin-top: "20px";
+  margin-bottom: "30px";
+}
+
+form {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #000000;
 }

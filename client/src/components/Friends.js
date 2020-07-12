@@ -2,29 +2,16 @@ import React from "react";
 
 import FriendItem from "./FriendItem";
 
-let friendsList = [
-    {
-        id: 1,
-        first: "Tom",
-        last: "Nudd"
-    },
-    {
-        id: 2,
-        first: "Dominic",
-        last: "Harvey"
-    }
-]
-
 class MyFriends extends React.Component {
-    constructor() {
-        super()
-        this.state = {
-          friends: friendsList,
-        }
-      }
-
     render() {
-        const friendComponents = this.state.friends.map(friend =>
+        let text;
+        if (this.props.info.friends !== undefined && this.props.info.friends.length > 0) {
+            text = this.props.info.friends;
+        } else {
+            text = "Add friends to use the app!";
+        }
+
+        /*const friendComponents = this.props.info.friends.map(friend =>
             <FriendItem key={friend.id} info={friend} />
           )
 
@@ -35,6 +22,9 @@ class MyFriends extends React.Component {
                     {friendComponents}
                 </div>
             </div>
+        )*/
+        return (
+            <p>{text}</p>
         )
     }
 }

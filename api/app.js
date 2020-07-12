@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const fetch = require("node-fetch");
 const session = require("express-session");
 const {URLSearchParams} = require("url");
@@ -25,6 +26,7 @@ app.use(session({
 }))
 
 app.use(bodyParser.json());
+app.use(cors());
 
 let users = {};
 
@@ -312,14 +314,6 @@ app.post("/api/changeSong", async (req, res) => {
     Routes
 */
 
-// Default
-app.get("/", async (req, res) => {
-    res.end("Hi!");
-    if (req.session.user) {
-        console.log(req.session.user);
-    }
-})
-
 // Is the user logged in?
 // Returns object {result: Boolean}
 app.get("/api/loggedIn", (req, res) => {
@@ -363,9 +357,12 @@ app.get("/api/friends/list", async (req, res) => {
         res.send({response: "Not logged in!"});
     }
 
-    let myFriends = Object.assign({}, req.session.user.friends);
+    let builtObj = [];
+    for (let friend in req.session.user.friends) {
+        builtObj[friend] = users[friend];
+    }
 
-    res.send(myFriends);
+    res.send(builtObj);
 })
 
 // POST /api/friends/add
@@ -393,6 +390,13 @@ app.post("/api/friends/add", async (req, res) => {
 
     res.send(req.session.user.friends);
 })
+
+app.get("/api/state", (req, res) => {
+    res.send(req.session.user);
+})
+
+// Default
+app.use('/', express.static('./build'));
 
 /*
     Main loop
