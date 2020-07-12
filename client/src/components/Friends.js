@@ -1,8 +1,23 @@
 import React from "react";
 
 import FriendItem from "./FriendItem";
+import MockFriendItem from "./MockFriendItem";
 
 let HOST = "http://127.0.0.1:8090";
+
+let mockFriends = [
+    {
+        id: 1,
+        name: "Tom",
+        song: {
+            name: "The Reynolds Pamphlet",
+            artist: "Original Broadway Cast of Hamilton",
+            position: "12",
+            end: "128",
+            uri: "spotify:track:7D1Lf7N7AtCuEq5PGJtIPz"
+        }
+    }
+]
 
 class Friends extends React.Component {
     constructor() {
@@ -44,12 +59,18 @@ class Friends extends React.Component {
             })
         }
 
+        let mockFriendComponents = mockFriends.map(friend => {
+            if (friend != null) {
+                return <MockFriendItem key={friend._id} info={friend} />
+            }
+        })
+
+
         return (
-            <div>
-                <h2>Friends</h2>
+            <div className="friendArea">
                 {len <= 0 && <p>Add friends to use the app!</p>}
                 <div className="list">
-                    {friendComponents}
+                    {mockFriendComponents}
                 </div>
             </div>
         )

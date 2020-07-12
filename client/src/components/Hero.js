@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Button } from "react-bootstrap";
 import Container from "@material-ui/core/Container";
 
 let HOST = "http://127.0.0.1:8090";
@@ -46,12 +47,12 @@ class MyInfo extends React.Component {
     render() {
         let button;
         if (!this.props.loggedIn) {
-            button = <button>Sign in with Spotify</button>;
+            button = <a className="btn btn-success" href="http://127.0.0.1:8090/login">Sign in with Spotify</a>;
         } else {
             button = (
                 <div>
-                    <button onClick={this.addFriend} value="Add friend">Add friend</button><br/>
-                    <button onClick={this.shareMusic} value="Share my music">Share my music</button>
+                    <a className="btn btn-success" onClick={this.addFriend}>Add friend</a>{' '}
+                    <a className="btn btn-success" onClick={this.shareMusic}>Share my music</a>{' '}
                 </div>
             )
         }
@@ -59,7 +60,7 @@ class MyInfo extends React.Component {
             <div className={this.props.loggedIn ? "heroContent" : "fullHero"}>
                 <Container maxWidth="sm">
                     <h1 className={this.props.loggedIn ? "chop" : ""}>SyncItUp</h1>
-                    <h2>Listen along to Spotify with your friends</h2>
+                    <h2>Listen to Spotify with your friends</h2>
                 </Container>
                 <div className="heroButtons">
                     {button}
