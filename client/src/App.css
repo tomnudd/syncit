@@ -28,6 +28,7 @@ h1 {
 
 h2 {
   margin-top: 10px;
+  margin-bottom: 25px;
   font-weight: 600;
 }
 
@@ -62,4 +63,8 @@ p {
 
 .card-header {
   color: #000000;
+}
+
+.heroButtons {
+  margin-bottom: 20px;
 }

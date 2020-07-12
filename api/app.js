@@ -287,24 +287,22 @@ app.get("/api/attempt", async (req, res) => {
 // GET /api/attempt
 // Syncs you up to a bit of Hamilton
 app.post("/api/changeSong", async (req, res) => {
+    console.log(req.body);
     if (req.body.uri) {
+        console.log('step 2')
         let timestamp = (req.body.position_ms === undefined) ? 0 : req.body.position_ms;
 
-        let spot = await fetch("https://api.spotify.com/v1/me/player/play", {
+        await fetch("https://api.spotify.com/v1/me/player/play", {
             method: "PUT",
             headers: {
                 "Authorization": 'Bearer ' + req.session.user.access_token,
             },
             body: JSON.stringify({
-                uris: req.body.uri,
+                uris: [req.body.uri],
                 position_ms: timestamp,
             }),
-        }).then((response) => {
-            // error handling comes later!
-            return response;
-        })
-
-        res.redirect("/");
+        }).then(response => response.json())
+          .then(response => console.log(response))
     } else {
         res.send({response: "No URI provided"})
     }

@@ -11,34 +11,51 @@ function pad(num, size) {
     return s;
 }
 
-function syncSong(songURI, position) {
-    console.log('is being called')
-    fetch(HOST + "/api/friends/add", {
-        method: "POST",
-        headers: {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            uri: songURI,
-            position_ms: position * 1000
-        })
-    })
-    .then(res => console.log(res));
-}
+class MockFriendItem extends React.Component {
+    constructor() {
+        super()
 
-function MockFriendItem(props) {
-    return (
-        <Card border="success" style={{ width: '18rem' }}>
-            <Card.Header>{props.info.name}</Card.Header>
-            <Card.Body>
-                <Card.Text>
-                    Listening to {props.info.song.name}. {Math.floor(props.info.song.position / 60)}:{pad(props.info.song.position % 60, 2)} / {Math.floor(props.info.song.end / 60)}:{pad(props.info.song.end % 60, 2)}
-                </Card.Text>
-                <Button variant="primary" onClick={syncSong(props.info.song.uri, props.info.song.position)}>Sync</Button>
-            </Card.Body>
-        </Card>
-    )
+        this.state = {
+            timePassed: 0
+        }
+
+        this.syncSong = this.syncSong.bind(this);
+    }
+
+    syncSong() {
+        console.log('is being called')
+        fetch(HOST + "/api/changeSong", {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                uri: this.props.info.song.uri,
+                position_ms: (parseInt(this.props.info.song.position) + this.state.timePassed) * 1000
+            })
+        })
+        .then(res => console.log(res));
+    }
+
+    componentDidMount() {
+        setInterval(() => this.setState(oldState => ({timePassed: oldState.timePassed + 1})), 1000);
+    }
+
+    render() {
+        console.log(this.state.timePassed, this.props.info.song.position);
+        return (
+            <Card border="success" style={{ width: '18rem' }}>
+                <Card.Header>{this.props.info.name}</Card.Header>
+                <Card.Body>
+                    <Card.Text>
+                        Listening to <b>{this.props.info.song.name}</b> by <i>{this.props.info.song.artist}</i>. {Math.floor((parseInt(this.props.info.song.position) + this.state.timePassed) / 60)}:{pad((parseInt(this.props.info.song.position) + this.state.timePassed) % 60, 2)} / {Math.floor(this.props.info.song.end / 60)}:{pad(this.props.info.song.end % 60, 2)}
+                    </Card.Text>
+                    <Button variant="primary" onClick={this.syncSong}>Sync</Button>
+                </Card.Body>
+            </Card>
+        )
+    }
 }
 
 export default MockFriendItem;
