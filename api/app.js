@@ -241,13 +241,41 @@ app.get("/api/currentSong", async (req, res) => {
     res.send(playingObj);
 })
 
+async function currentlyPlaying(user) {
+    // Check if token has expired
+    // If it has, replace it
+
+    let playingObj = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+        method: "GET",
+        headers: {
+            "Authorization": 'Bearer ' + user.access_token,
+        },
+    }).then(response => {
+        if (response.status == 204) {
+            return {response: "No song playing"};
+        } else {
+            return response.json();
+        }
+    });
+
+    return playingObj;
+}
+
+// GET /api/friends/list
+// returns a list of friends
 app.get("/api/friends/list", async (req, res) => {
     if (!req.session || !req.session.user) {
         res.send({response: "Not logged in!"});
     }
-    res.send(req.session.user.friends);
+
+    let myFriends = Object.assign({}, req.session.user.friends);
+
+    res.send(myFriends);
 })
 
+// POST /api/friends/add
+// body {id: "friendID"}
+// returns updated list of friends
 app.post("/api/friends/add", async (req, res) => {
     if (!req.session || !req.session.user) {
         res.send({response: "Not logged in!"});
@@ -256,7 +284,7 @@ app.post("/api/friends/add", async (req, res) => {
     let friendId = req.body.id;
     
     users[req.session.user._id]["friends"].append(friendId);
-    req.session.user._id["friends"].append(friendId);
+    req.session.user.friends.append(friendId);
 
     let toChange = {
         friends: users[req.session.user._id]["friends"],
@@ -271,6 +299,8 @@ app.post("/api/friends/add", async (req, res) => {
     res.send(req.session.user.friends);
 })
 
+// GET /api/attempt
+// Syncs you up to a bit of Hamilton
 app.get("/api/attempt", async (req, res) => {
     let spot = await fetch("https://api.spotify.com/v1/me/player/play", {
         method: "PUT",
@@ -294,6 +324,7 @@ app.get("/api/attempt", async (req, res) => {
     Routes
 */
 
+// Default
 app.get("/", async (req, res) => {
     res.end("Hi!");
     if (req.session.user) {
@@ -310,21 +341,50 @@ app.get("/api/loggedIn", (req, res) => {
     res.send({response: false});
 })
 
+// POST /api/share
+// body {share: true} or {share: false}
+// turns online or offline
 app.post("/api/share", (req, res) => {
     if (!req.session || !req.session.user) {
         res.send({response: "Not logged in!"});
     }
+    if (req.body.share == true) {
+        users[req.session.user._id]["status"] = "online";
+    } else {
+        users[req.session.user._id]["status"] = "offline";
+    }
+})
 
-    
+// GET /api/status
+app.get("/api/status", (req, res) => {
+    if (!req.session || !req.session.user) {
+        res.send({response: "Not logged in!"});
+    }
+
+    if (users[req.session.user._id]["status"] == "online") {
+        res.send({response: "online"});
+    } else {
+        res.send({response: "offline"});
+    }
 })
 
 /*
     Main loop
+    Every two seconds, let's check what they're listening to
 */
 
-var requestLoop = setInterval(function(){
-    // do things
-  }, 5000);
+var requestLoop = setInterval(async function() {
+    activeUsers = [];
+    for (let user in users) {
+        if (true) {
+            let curPlaying = await currentlyPlaying(users[user]).then(response => response);
+            users[user]["song"] = curPlaying;
+            console.log("AAAA", users[user]);
+        }
+    }
+}, 1000);
+
+requestLoop;
   
 
 module.exports = app;
