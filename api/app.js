@@ -357,12 +357,7 @@ app.get("/api/friends/list", async (req, res) => {
         res.send({response: "Not logged in!"});
     }
 
-    let builtObj = [];
-    for (let friend in req.session.user.friends) {
-        builtObj[friend] = users[friend];
-    }
-
-    res.send(builtObj);
+    res.send(req.session.user.friends);
 })
 
 // POST /api/friends/add
@@ -374,9 +369,12 @@ app.post("/api/friends/add", async (req, res) => {
     }
 
     let friendId = req.body.id;
+    console.log(friendId);
 
-    req.session.user.friends.push(friendId);
-    users[req.session.user._id]["friends"] = req.session.user.friends;
+    let tempObj = req.session.user.friends;
+    tempObj.push(friendId);
+    users[req.session.user._id]["friends"] = tempObj;
+    req.session.user.friends = tempObj;
 
     let toChange = {
         friends: users[req.session.user._id]["friends"],
@@ -388,7 +386,7 @@ app.post("/api/friends/add", async (req, res) => {
         }
     })
 
-    res.send(req.session.user.friends);
+    res.send(tempObj);
 })
 
 app.get("/api/state", (req, res) => {
