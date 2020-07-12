@@ -319,8 +319,9 @@ app.post("/api/changeSong", async (req, res) => {
 app.get("/api/loggedIn", (req, res) => {
     if (req.session && req.session.user) {
         res.send({response: true});
+    } else {
+        res.send({response: false});
     }
-    res.send({response: false});
 })
 
 // POST /api/share
@@ -391,6 +392,16 @@ app.post("/api/friends/add", async (req, res) => {
 
 app.get("/api/state", (req, res) => {
     res.send(req.session.user);
+})
+
+app.get("/api/friend/:id", (req, res) => {
+    const id = req.params.id;
+
+    if (users[id] === undefined) {
+        res.send({});
+    } else {
+        res.send(users[id]);
+    }
 })
 
 // Default
