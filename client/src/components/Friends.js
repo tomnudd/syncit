@@ -2,31 +2,29 @@ import React from "react";
 
 import FriendItem from "./FriendItem";
 
-class MyFriends extends React.Component {
+class Friends extends React.Component {
     render() {
-        let text;
+        let friendComponents;
+        let len = 0;
         if (this.props.info.friends !== undefined && this.props.info.friends.length > 0) {
-            text = this.props.info.friends;
-        } else {
-            text = "Add friends to use the app!";
+            len = this.props.info.friends.length;
+            friendComponents = this.props.info.friends.map(friend =>
+                <FriendItem key={friend._id} info={friend} />
+              )
         }
 
-        /*const friendComponents = this.props.info.friends.map(friend =>
-            <FriendItem key={friend.id} info={friend} />
-          )
+         
 
         return (
             <div>
                 <h2>Friends</h2>
+                {len > 0 && <p>Add friends to use the app!</p>}
                 <div className="list">
                     {friendComponents}
                 </div>
             </div>
-        )*/
-        return (
-            <p>{text}</p>
         )
     }
 }
 
-export default MyFriends;
+export default Friends;

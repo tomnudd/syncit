@@ -1,8 +1,8 @@
 import React from "react";
 
-import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container";
-import Typography from "@material-ui/core/Typography";
+
+let HOST = "http://127.0.0.1:8090";
 
 class MyInfo extends React.Component {
     constructor() {
@@ -25,6 +25,20 @@ class MyInfo extends React.Component {
         event.preventDefault();
     }
 
+    addFriend() {
+        let friend = prompt("Please enter their Spotify username!", "Name");
+        if (friend != null && friend != "") {
+            // not empty
+            fetch(HOST + "/api/friends/add", {
+                method: "POST",
+                params: JSON.stringify({
+                    id: friend
+                })
+            })
+            .then(res => console.log(res));
+        }
+    }
+
     render() {
         let button;
         if (!this.props.loggedIn) {
@@ -32,13 +46,8 @@ class MyInfo extends React.Component {
         } else {
             button = (
                 <div>
-                    <form onSubmit={this.handleSubmit}>
-                        <label>
-                        <textarea placeholder="User name" value={this.state.value} onChange={this.handleChange} />
-                        </label><br />
-                        <input type="submit" value="Add friend" />
-                    </form>
-                    <button>Share my music</button>
+                    <button onClick={this.addFriend} value="Add friend">Add friend</button><br/>
+                    <button onClick={this.shareMusic} value="Share my music">Share my music</button>
                 </div>
             )
         }

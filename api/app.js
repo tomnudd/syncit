@@ -369,14 +369,17 @@ app.get("/api/friends/list", async (req, res) => {
 // body {id: "friendID"}
 // returns updated list of friends
 app.post("/api/friends/add", async (req, res) => {
+    console.log("BODY", req.body.id);
     if (!req.session || !req.session.user) {
         res.send({response: "Not logged in!"});
     }
 
     let friendId = req.body.id;
-    
-    users[req.session.user._id]["friends"].append(friendId);
-    req.session.user.friends.append(friendId);
+
+    req.session.user.friends.push(friendId);
+
+    users[req.session.user._id]["friends"] = req.session.user.friends;
+
 
     let toChange = {
         friends: users[req.session.user._id]["friends"],
