@@ -369,7 +369,6 @@ app.get("/api/friends/list", async (req, res) => {
 // body {id: "friendID"}
 // returns updated list of friends
 app.post("/api/friends/add", async (req, res) => {
-    console.log("BODY", req.body.id);
     if (!req.session || !req.session.user) {
         res.send({response: "Not logged in!"});
     }
@@ -377,9 +376,7 @@ app.post("/api/friends/add", async (req, res) => {
     let friendId = req.body.id;
 
     req.session.user.friends.push(friendId);
-
     users[req.session.user._id]["friends"] = req.session.user.friends;
-
 
     let toChange = {
         friends: users[req.session.user._id]["friends"],
@@ -415,7 +412,7 @@ var requestLoop = setInterval(async function() {
             console.log("AAAA", users[user]);
         }
     }
-}, 1000);
+}, 5000);
 
 requestLoop;
 

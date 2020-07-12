@@ -31,7 +31,11 @@ class MyInfo extends React.Component {
             // not empty
             fetch(HOST + "/api/friends/add", {
                 method: "POST",
-                params: JSON.stringify({
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     id: friend
                 })
             })

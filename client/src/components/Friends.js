@@ -13,8 +13,6 @@ class Friends extends React.Component {
               )
         }
 
-         
-
         return (
             <div>
                 <h2>Friends</h2>
